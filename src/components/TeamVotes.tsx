@@ -1,20 +1,19 @@
 
 import React from "react";
-
-type Vote = "yes" | "no" | null;
+import type { Vote } from "@/types/supabase";
 
 interface TeamVotesProps {
   team: string;
   teamName: string;
-  votes: Record<string, Vote>;
+  votes: Vote[];
   color: "blue" | "red";
 }
 
 const TeamVotes: React.FC<TeamVotesProps> = ({ teamName, votes, color }) => {
   // Count the votes
-  const yesCount = Object.values(votes).filter(v => v === "yes").length;
-  const noCount = Object.values(votes).filter(v => v === "no").length;
-  const totalVotes = Object.keys(votes).length;
+  const yesCount = votes.filter(v => v.vote === "yes").length;
+  const noCount = votes.filter(v => v.vote === "no").length;
+  const totalVotes = votes.length;
   
   // Calculate percentages for the progress bars
   const yesPercentage = totalVotes ? (yesCount / totalVotes) * 100 : 0;

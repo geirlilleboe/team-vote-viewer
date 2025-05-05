@@ -5,29 +5,19 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import TeamVotes from "@/components/TeamVotes";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { VotingSession, Vote } from "@/types/supabase";
 
 // Team types for clarity
 type Team = "team1" | "team2";
-type Vote = "yes" | "no" | null;
-
-// Initialize team votes with local storage if available
-const getInitialVotes = () => {
-  if (typeof window === "undefined") return { team1: {}, team2: {} };
-  
-  try {
-    const saved = localStorage.getItem("teamVotes");
-    return saved ? JSON.parse(saved) : { team1: {}, team2: {} };
-  } catch (e) {
-    console.error("Error loading votes from localStorage", e);
-    return { team1: {}, team2: {} };
-  }
-};
+type VoteType = "yes" | "no" | null;
 
 const VotingPage = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   
-  // State for the current question
+  // Session data
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [question, setQuestion] = useState("Do you agree with the proposal?");
   
   // Which team the user has selected
@@ -37,10 +27,10 @@ const VotingPage = () => {
   const [userId, setUserId] = useState("");
   
   // All votes from both teams
-  const [teamVotes, setTeamVotes] = useState(getInitialVotes());
+  const [votes, setVotes] = useState<Vote[]>([]);
   
   // Current user's vote
-  const [myVote, setMyVote] = useState<Vote>(null);
+  const [myVote, setMyVote] = useState<VoteType>(null);
   
   // Timer for voting period
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
@@ -51,71 +41,154 @@ const VotingPage = () => {
   // State to track if voting period is active
   const [votingActive, setVotingActive] = useState(false);
   
-  // Set up the user ID on first load
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Initialize or fetch voting session
   useEffect(() => {
+    if (!code) return;
+    
     // Generate a random ID for this user
     const randomId = Math.random().toString(36).substring(2, 10);
     setUserId(randomId);
     
-    // Attempt to load team selection from localStorage
+    // Try to load team from localStorage (only for UI preference)
     const savedTeam = localStorage.getItem("selectedTeam");
     if (savedTeam) {
       setSelectedTeam(savedTeam as Team);
     }
     
-    // Load existing vote if we have one
-    const votes = getInitialVotes();
-    if (savedTeam && votes[savedTeam][randomId]) {
-      setMyVote(votes[savedTeam][randomId]);
-    }
-    
-    // Check if we need to show results based on localStorage
-    const resultsVisible = localStorage.getItem("showResults") === "true";
-    setShowResults(resultsVisible);
-    
-    // Check if there's an active timer in localStorage
-    const storedEndTime = localStorage.getItem("votingEndTime");
-    if (storedEndTime) {
-      const endTime = parseInt(storedEndTime, 10);
-      const now = Date.now();
+    const fetchOrCreateSession = async () => {
+      setIsLoading(true);
       
-      if (endTime > now) {
-        // Voting is still active
-        setVotingActive(true);
-        setTimeRemaining(Math.ceil((endTime - now) / 1000));
-        setShowResults(false);
+      // Check if session exists
+      const { data: existingSession, error: fetchError } = await supabase
+        .from("voting_sessions")
+        .select("*")
+        .eq("code", code)
+        .single();
+      
+      if (fetchError && fetchError.code !== "PGRST116") {
+        console.error("Error fetching session:", fetchError);
+        toast({
+          title: "Error",
+          description: "Could not fetch voting session",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (existingSession) {
+        // Session exists, use it
+        setSessionId(existingSession.id);
+        setQuestion(existingSession.question);
+        setVotingActive(existingSession.voting_active);
+        setShowResults(existingSession.show_results);
+        
+        // Set timer if voting is active
+        if (existingSession.voting_active && existingSession.end_time) {
+          const endTime = new Date(existingSession.end_time).getTime();
+          const now = Date.now();
+          
+          if (endTime > now) {
+            setTimeRemaining(Math.ceil((endTime - now) / 1000));
+          } else {
+            // Voting has ended
+            updateSessionStatus(existingSession.id, false, true);
+          }
+        }
       } else {
-        // Voting has ended
-        setVotingActive(false);
-        setShowResults(true);
-        localStorage.setItem("showResults", "true");
+        // Create new session
+        const { data: newSession, error: createError } = await supabase
+          .from("voting_sessions")
+          .insert([{ code }])
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error("Error creating session:", createError);
+          toast({
+            title: "Error",
+            description: "Could not create voting session",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        setSessionId(newSession.id);
+        setQuestion(newSession.question);
+      }
+      
+      setIsLoading(false);
+    };
+    
+    fetchOrCreateSession();
+    
+    // Set up real-time subscription
+    const votesChannel = supabase
+      .channel('public:votes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'votes' }, 
+        () => {
+          if (sessionId) {
+            fetchVotes(sessionId);
+          }
+        }
+      )
+      .subscribe();
+      
+    const sessionsChannel = supabase
+      .channel('public:voting_sessions')
+      .on('postgres_changes', 
+        { event: 'UPDATE', schema: 'public', table: 'voting_sessions' }, 
+        (payload) => {
+          const session = payload.new as VotingSession;
+          if (session.code === code) {
+            setVotingActive(session.voting_active);
+            setShowResults(session.show_results);
+            
+            if (session.voting_active && session.end_time) {
+              const endTime = new Date(session.end_time).getTime();
+              const now = Date.now();
+              
+              if (endTime > now) {
+                setTimeRemaining(Math.ceil((endTime - now) / 1000));
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(votesChannel);
+      supabase.removeChannel(sessionsChannel);
+    };
+  }, [code]);
+  
+  // Fetch votes when sessionId changes
+  useEffect(() => {
+    if (sessionId) {
+      fetchVotes(sessionId);
+      
+      // Check for user's vote
+      if (selectedTeam && userId) {
+        checkUserVote(sessionId);
       }
     }
-  }, []);
-  
-  // Save votes to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem("teamVotes", JSON.stringify(teamVotes));
-  }, [teamVotes]);
-  
-  // Save team selection to localStorage
-  useEffect(() => {
-    if (selectedTeam) {
-      localStorage.setItem("selectedTeam", selectedTeam);
-    }
-  }, [selectedTeam]);
+  }, [sessionId, selectedTeam, userId]);
   
   // Timer countdown effect
   useEffect(() => {
-    if (!votingActive || timeRemaining === null) return;
+    if (!votingActive || timeRemaining === null || !sessionId) return;
     
     const timerInterval = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev === null || prev <= 1) {
           clearInterval(timerInterval);
-          setVotingActive(false);
-          setShowResults(true);
-          localStorage.setItem("showResults", "true");
+          updateSessionStatus(sessionId, false, true);
           toast({
             title: "Voting has ended",
             description: "Results are now visible to everyone"
@@ -127,29 +200,143 @@ const VotingPage = () => {
     }, 1000);
     
     return () => clearInterval(timerInterval);
-  }, [votingActive, timeRemaining]);
+  }, [votingActive, timeRemaining, sessionId]);
+  
+  // Fetch all votes for this session
+  const fetchVotes = async (sessionId: string) => {
+    const { data, error } = await supabase
+      .from("votes")
+      .select("*")
+      .eq("session_id", sessionId);
+    
+    if (error) {
+      console.error("Error fetching votes:", error);
+      return;
+    }
+    
+    setVotes(data);
+  };
+  
+  // Check if the user has already voted
+  const checkUserVote = async (sessionId: string) => {
+    if (!userId || !selectedTeam) return;
+    
+    const { data, error } = await supabase
+      .from("votes")
+      .select("*")
+      .eq("session_id", sessionId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error checking user vote:", error);
+      return;
+    }
+    
+    if (data) {
+      setMyVote(data.vote as VoteType);
+      setSelectedTeam(data.team as Team);
+    }
+  };
+  
+  // Update session status (active/results)
+  const updateSessionStatus = async (sessionId: string, active: boolean, showResults: boolean) => {
+    const updateData: any = {
+      voting_active: active,
+      show_results: showResults,
+    };
+    
+    if (active) {
+      // Set end time 15 seconds in the future
+      const endTime = new Date(Date.now() + 15 * 1000).toISOString();
+      updateData.end_time = endTime;
+    }
+    
+    const { error } = await supabase
+      .from("voting_sessions")
+      .update(updateData)
+      .eq("id", sessionId);
+    
+    if (error) {
+      console.error("Error updating session:", error);
+      toast({
+        title: "Error",
+        description: "Could not update voting status",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setVotingActive(active);
+    setShowResults(showResults);
+    
+    if (active) {
+      setTimeRemaining(15);
+      toast({
+        title: "Voting has started",
+        description: "You have 15 seconds to cast your vote"
+      });
+    }
+  };
   
   // Handle team selection
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
+    localStorage.setItem("selectedTeam", team);
   };
   
   // Handle voting
-  const handleVote = (vote: Vote) => {
-    if (!selectedTeam || !userId || !votingActive) return;
+  const handleVote = async (vote: VoteType) => {
+    if (!sessionId || !selectedTeam || !userId || !votingActive || vote === null) return;
     
-    // Update the vote in the teams object
-    setTeamVotes(prev => ({
-      ...prev,
-      [selectedTeam]: {
-        ...prev[selectedTeam],
-        [userId]: vote
+    // Check if user already voted
+    const { data: existingVote } = await supabase
+      .from("votes")
+      .select("*")
+      .eq("session_id", sessionId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    
+    if (existingVote) {
+      // Update existing vote
+      const { error } = await supabase
+        .from("votes")
+        .update({ vote, team: selectedTeam })
+        .eq("id", existingVote.id);
+      
+      if (error) {
+        console.error("Error updating vote:", error);
+        toast({
+          title: "Error",
+          description: "Could not update your vote",
+          variant: "destructive"
+        });
+        return;
       }
-    }));
+    } else {
+      // Create new vote
+      const { error } = await supabase
+        .from("votes")
+        .insert([{
+          session_id: sessionId,
+          user_id: userId,
+          team: selectedTeam,
+          vote
+        }]);
+      
+      if (error) {
+        console.error("Error recording vote:", error);
+        toast({
+          title: "Error",
+          description: "Could not record your vote",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
     
     setMyVote(vote);
     
-    // Show notification
     toast({
       title: "Vote recorded",
       description: `You voted: ${vote}`
@@ -158,34 +345,37 @@ const VotingPage = () => {
   
   // Start a new voting session
   const startVoting = () => {
-    // Set 15-second timer
-    const votingDuration = 15 * 1000; // 15 seconds
-    const endTime = Date.now() + votingDuration;
+    if (!sessionId) return;
     
-    localStorage.setItem("votingEndTime", endTime.toString());
-    localStorage.setItem("showResults", "false");
-    
-    setTimeRemaining(15);
-    setVotingActive(true);
-    setShowResults(false);
-    
-    toast({
-      title: "Voting has started",
-      description: "You have 15 seconds to cast your vote"
-    });
+    updateSessionStatus(sessionId, true, false);
   };
   
   // Reset all votes (admin function)
-  const resetVotes = () => {
-    setTeamVotes({ team1: {}, team2: {} });
-    setMyVote(null);
-    setShowResults(false);
-    setVotingActive(false);
-    setTimeRemaining(null);
+  const resetVotes = async () => {
+    if (!sessionId) return;
     
-    localStorage.removeItem("teamVotes");
-    localStorage.removeItem("votingEndTime");
-    localStorage.removeItem("showResults");
+    // Update session status
+    await updateSessionStatus(sessionId, false, false);
+    
+    // Delete all votes for this session
+    const { error } = await supabase
+      .from("votes")
+      .delete()
+      .eq("session_id", sessionId);
+    
+    if (error) {
+      console.error("Error resetting votes:", error);
+      toast({
+        title: "Error",
+        description: "Could not reset votes",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setVotes([]);
+    setMyVote(null);
+    setTimeRemaining(null);
     
     toast({
       title: "Votes reset",
@@ -197,6 +387,22 @@ const VotingPage = () => {
   const handleBack = () => {
     navigate("/");
   };
+  
+  // Filter votes by team
+  const teamVotes = {
+    team1: votes.filter(v => v.team === "team1"),
+    team2: votes.filter(v => v.team === "team2")
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-4 md:p-6 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">Loading session...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-6">
@@ -284,7 +490,7 @@ const VotingPage = () => {
             <ToggleGroup 
               type="single" 
               value={myVote || ""} 
-              onValueChange={(v) => handleVote(v as Vote)}
+              onValueChange={(v) => handleVote(v as VoteType)}
               disabled={!votingActive}
             >
               <ToggleGroupItem 

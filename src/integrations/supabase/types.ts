@@ -9,7 +9,71 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      votes: {
+        Row: {
+          created_at: string
+          id: string
+          session_id: string
+          team: string
+          user_id: string
+          vote: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_id: string
+          team: string
+          user_id: string
+          vote: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_id?: string
+          team?: string
+          user_id?: string
+          vote?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "voting_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voting_sessions: {
+        Row: {
+          code: string
+          created_at: string
+          end_time: string | null
+          id: string
+          question: string
+          show_results: boolean
+          voting_active: boolean
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          question?: string
+          show_results?: boolean
+          voting_active?: boolean
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          question?: string
+          show_results?: boolean
+          voting_active?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
