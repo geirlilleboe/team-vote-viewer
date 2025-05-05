@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { VotingSession, Vote } from "@/types/supabase";
 
-// Team types for clarity
+// Team types for clarity - these are just for local use
 type Team = "team1" | "team2";
 type VoteType = "yes" | "no" | null;
 

@@ -12,7 +12,7 @@ export type VotingSession = {
 export type Vote = {
   id: string;
   session_id: string;
-  team: "team1" | "team2";
+  team: string; // Change from "team1" | "team2" to string to match what comes from the database
   user_id: string;
   vote: "yes" | "no";
   created_at: string;
