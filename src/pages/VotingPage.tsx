@@ -214,7 +214,13 @@ const VotingPage = () => {
       return;
     }
     
-    setVotes(data);
+    // Ensure the vote data conforms to our Vote type
+    const typedVotes = data.map(vote => ({
+      ...vote,
+      vote: vote.vote as "yes" | "no" // Type assertion for safety
+    }));
+    
+    setVotes(typedVotes);
   };
   
   // Check if the user has already voted
