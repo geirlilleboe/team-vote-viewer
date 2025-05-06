@@ -8,9 +8,20 @@ import { Button } from "@/components/ui/button";
 import QRCode from "react-qr-code";
 import { toast } from "@/hooks/use-toast";
 
+// Generate random hash for team identification
+const generateTeamHash = (team: string) => {
+  const randomPart = Math.random().toString(36).substring(2, 8);
+  // Encode the team name in the hash but make it non-obvious
+  return `${randomPart}-${btoa(team).replace(/=/g, '')}`;
+};
+
 const AdminPage = () => {
   const { code } = useParams<{ code: string }>();
   const [showQRCodes, setShowQRCodes] = useState(false);
+  
+  // Generate unique team identifiers
+  const team1Hash = generateTeamHash("team1");
+  const team2Hash = generateTeamHash("team2");
   
   const {
     question,
@@ -25,8 +36,8 @@ const AdminPage = () => {
   } = useVotingSession();
   
   const baseUrl = window.location.origin;
-  const team1Url = `${baseUrl}/client/${code}/team/team1`;
-  const team2Url = `${baseUrl}/client/${code}/team/team2`;
+  const team1Url = `${baseUrl}/client/${code}/team/${team1Hash}`;
+  const team2Url = `${baseUrl}/client/${code}/team/${team2Hash}`;
   
   const copyToClipboard = (text: string, team: string) => {
     navigator.clipboard.writeText(text).then(() => {

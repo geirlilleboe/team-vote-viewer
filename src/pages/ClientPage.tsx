@@ -5,8 +5,31 @@ import VotingControls from "@/components/voting/VotingControls";
 import ResultsDisplay from "@/components/voting/ResultsDisplay";
 import { useVotingSession } from "@/hooks/useVotingSession";
 
+// Function to decode team hash into actual team name
+const decodeTeamHash = (hash: string): "team1" | "team2" | undefined => {
+  try {
+    const parts = hash.split('-');
+    if (parts.length < 2) return undefined;
+    
+    // Extract and decode the base64 part
+    const encoded = parts[parts.length - 1];
+    const decoded = atob(encoded + '=='); // Add padding if needed
+    
+    if (decoded === "team1" || decoded === "team2") {
+      return decoded;
+    }
+    return undefined;
+  } catch (e) {
+    console.error("Invalid team hash:", e);
+    return undefined;
+  }
+};
+
 const ClientPage = () => {
-  const { code, teamId } = useParams<{ code: string; teamId?: string }>();
+  const { code, teamHash } = useParams<{ code: string; teamHash?: string }>();
+  
+  // Decode team from hash if provided
+  const initialTeam = teamHash ? decodeTeamHash(teamHash) : undefined;
   
   const {
     question,
@@ -18,7 +41,7 @@ const ClientPage = () => {
     isLoading,
     handleTeamSelect,
     handleVote
-  } = useVotingSession(teamId as "team1" | "team2" | undefined);
+  } = useVotingSession(initialTeam);
   
   if (isLoading) {
     return (

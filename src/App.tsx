@@ -23,7 +23,7 @@ const App = () => (
           <Route path="/voting/:code" element={<VotingPage />} />
           <Route path="/admin/:code" element={<AdminPage />} />
           <Route path="/client/:code" element={<ClientPage />} />
-          <Route path="/client/:code/team/:teamId" element={<ClientPage />} />
+          <Route path="/client/:code/team/:teamHash" element={<ClientPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
