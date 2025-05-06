@@ -9,7 +9,7 @@ import type { VotingSession, Vote } from "@/types/supabase";
 type Team = "team1" | "team2";
 type VoteType = "yes" | "no" | null;
 
-export const useVotingSession = () => {
+export const useVotingSession = (initialTeam?: Team) => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   
@@ -18,7 +18,7 @@ export const useVotingSession = () => {
   const [question, setQuestion] = useState("Do you agree with the proposal?");
   
   // Which team the user has selected
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(initialTeam || null);
   
   // Unique ID for this user (generated for this session)
   const [userId, setUserId] = useState("");
@@ -50,9 +50,14 @@ export const useVotingSession = () => {
     setUserId(randomId);
     
     // Try to load team from localStorage (only for UI preference)
-    const savedTeam = localStorage.getItem("selectedTeam");
-    if (savedTeam) {
-      setSelectedTeam(savedTeam as Team);
+    if (!initialTeam) {
+      const savedTeam = localStorage.getItem("selectedTeam");
+      if (savedTeam) {
+        setSelectedTeam(savedTeam as Team);
+      }
+    } else {
+      // If initialTeam is provided, store it in localStorage
+      localStorage.setItem("selectedTeam", initialTeam);
     }
     
     const fetchOrCreateSession = async () => {
@@ -163,7 +168,7 @@ export const useVotingSession = () => {
       supabase.removeChannel(votesChannel);
       supabase.removeChannel(sessionsChannel);
     };
-  }, [code]);
+  }, [code, initialTeam]);
   
   // Fetch votes when sessionId changes
   useEffect(() => {

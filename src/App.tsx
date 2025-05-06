@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import VotingPage from "./pages/VotingPage";
+import AdminPage from "./pages/AdminPage";
+import ClientPage from "./pages/ClientPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,6 +21,9 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/voting/:code" element={<VotingPage />} />
+          <Route path="/admin/:code" element={<AdminPage />} />
+          <Route path="/client/:code" element={<ClientPage />} />
+          <Route path="/client/:code/team/:teamId" element={<ClientPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

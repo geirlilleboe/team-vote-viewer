@@ -10,6 +10,7 @@ interface VotingHeaderProps {
   onStartVoting: () => void;
   onResetVotes: () => void;
   onBack: () => void;
+  isAdmin?: boolean;
 }
 
 const VotingHeader: React.FC<VotingHeaderProps> = ({
@@ -20,25 +21,28 @@ const VotingHeader: React.FC<VotingHeaderProps> = ({
   onStartVoting,
   onResetVotes,
   onBack,
+  isAdmin = false,
 }) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-bold">{question}</h1>
         
-        <div className="flex gap-2">
-          {!votingActive && timeRemaining === null && (
-            <Button variant="default" onClick={onStartVoting}>
-              Start Voting (15s)
+        {isAdmin && (
+          <div className="flex gap-2">
+            {!votingActive && timeRemaining === null && (
+              <Button variant="default" onClick={onStartVoting}>
+                Start Voting (15s)
+              </Button>
+            )}
+            <Button variant="outline" onClick={onBack}>
+              Change Code
             </Button>
-          )}
-          <Button variant="outline" onClick={onBack}>
-            Change Code
-          </Button>
-          <Button variant="destructive" onClick={onResetVotes}>
-            Reset Votes
-          </Button>
-        </div>
+            <Button variant="destructive" onClick={onResetVotes}>
+              Reset Votes
+            </Button>
+          </div>
+        )}
       </div>
       
       {/* Show timer when voting is active */}
