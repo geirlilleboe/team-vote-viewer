@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import VotingHeader from "@/components/voting/VotingHeader";
@@ -7,6 +6,7 @@ import { useVotingSession } from "@/hooks/useVotingSession";
 import { Button } from "@/components/ui/button";
 import QRCode from "react-qr-code";
 import { toast } from "@/hooks/use-toast";
+import { TEAM1_HASH, TEAM2_HASH } from "@/hooks/voting/types";
 
 // Generate random hash for team identification
 const generateTeamHash = (team: string) => {
@@ -19,9 +19,9 @@ const AdminPage = () => {
   const { code } = useParams<{ code: string }>();
   const [showQRCodes, setShowQRCodes] = useState(false);
   
-  // Generate unique team identifiers
-  const team1Hash = generateTeamHash("team1");
-  const team2Hash = generateTeamHash("team2");
+  // Use the fixed team identifiers instead of generating new ones
+  const team1Hash = TEAM1_HASH;
+  const team2Hash = TEAM2_HASH;
   
   const {
     question,

@@ -10,3 +10,7 @@ export interface TeamVotes {
   team1: Vote[];
   team2: Vote[];
 }
+
+// Fixed obfuscated team identifiers
+export const TEAM1_HASH = "a7f9q2-dGVhbTE";
+export const TEAM2_HASH = "z3x8p5-dGVhbTI";

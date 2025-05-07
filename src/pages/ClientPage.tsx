@@ -1,26 +1,20 @@
-
 import { useParams } from "react-router-dom";
 import TeamSelector from "@/components/voting/TeamSelector";
 import VotingControls from "@/components/voting/VotingControls";
 import ResultsDisplay from "@/components/voting/ResultsDisplay";
 import { useVotingSession } from "@/hooks/useVotingSession";
+import { TEAM1_HASH, TEAM2_HASH } from "@/hooks/voting/types";
 
-// Function to decode team hash into actual team name
+// Function to decode team hash into actual team name using fixed identifiers
 const decodeTeamHash = (hash: string): "team1" | "team2" | undefined => {
-  try {
-    const parts = hash.split('-');
-    if (parts.length < 2) return undefined;
-    
-    // Extract and decode the base64 part
-    const encoded = parts[parts.length - 1];
-    const decoded = atob(encoded + '=='); // Add padding if needed
-    
-    if (decoded === "team1" || decoded === "team2") {
-      return decoded;
-    }
-    return undefined;
-  } catch (e) {
-    console.error("Invalid team hash:", e);
+  // Use the fixed team identifiers for comparison
+  if (hash === TEAM1_HASH) {
+    return "team1";
+  } else if (hash === TEAM2_HASH) {
+    return "team2";
+  } else {
+    // If someone tries to use a different hash, log the attempt and return undefined
+    console.error("Invalid team hash:", hash);
     return undefined;
   }
 };
