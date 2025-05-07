@@ -19,49 +19,49 @@ const TeamVotes: React.FC<TeamVotesProps> = ({ teamName, votes, color }) => {
   const yesPercentage = totalVotes ? (yesCount / totalVotes) * 100 : 0;
   const noPercentage = totalVotes ? (noCount / totalVotes) * 100 : 0;
   
-  // Determine background colors based on the team color
-  const bgColor = color === "blue" ? "bg-blue-100" : "bg-red-100";
-  const yesBarColor = color === "blue" ? "bg-blue-500" : "bg-red-500";
-  const noBarColor = color === "blue" ? "bg-blue-300" : "bg-red-300";
+  // Determine background colors based on the team color - using Bulder Bank palette
+  const bgColor = color === "blue" ? "bg-[#DEEBFF]" : "bg-[#FFE2DD]";
+  const yesBarColor = color === "blue" ? "bg-[#0052CC]" : "bg-[#DE350B]";
+  const noBarColor = color === "blue" ? "bg-[#4C9AFF]" : "bg-[#FF8F73]";
   
   return (
-    <div className={`rounded-lg shadow-md p-6 ${bgColor}`}>
-      <h2 className="text-xl font-bold mb-4">{teamName}</h2>
+    <div className={`rounded-2xl shadow-sm p-6 ${bgColor} border border-white/50`}>
+      <h2 className="text-xl font-bold mb-5 text-[#172B4D]">{teamName}</h2>
       
       {totalVotes > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <div className="flex justify-between mb-1">
-              <span className="font-medium">Yes ({yesCount})</span>
-              <span className="text-sm">{yesPercentage.toFixed(0)}%</span>
+            <div className="flex justify-between mb-2">
+              <span className="font-medium text-[#172B4D]">Yes ({yesCount})</span>
+              <span className="text-sm bg-white/50 px-2 py-0.5 rounded-full">{yesPercentage.toFixed(0)}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
+            <div className="w-full bg-white/50 rounded-full h-5 overflow-hidden">
               <div 
-                className={`${yesBarColor} h-4 rounded-full`} 
+                className={`${yesBarColor} h-5 rounded-full transition-all duration-500`} 
                 style={{ width: `${yesPercentage}%` }}
               ></div>
             </div>
           </div>
           
           <div>
-            <div className="flex justify-between mb-1">
-              <span className="font-medium">No ({noCount})</span>
-              <span className="text-sm">{noPercentage.toFixed(0)}%</span>
+            <div className="flex justify-between mb-2">
+              <span className="font-medium text-[#172B4D]">No ({noCount})</span>
+              <span className="text-sm bg-white/50 px-2 py-0.5 rounded-full">{noPercentage.toFixed(0)}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
+            <div className="w-full bg-white/50 rounded-full h-5 overflow-hidden">
               <div 
-                className={`${noBarColor} h-4 rounded-full`} 
+                className={`${noBarColor} h-5 rounded-full transition-all duration-500`} 
                 style={{ width: `${noPercentage}%` }}
               ></div>
             </div>
           </div>
           
-          <div className="text-sm text-gray-600 mt-2">
-            Total votes: {totalVotes}
+          <div className="text-sm text-[#5E6C84] mt-4 pt-3 border-t border-white/50">
+            Total votes: <span className="font-medium">{totalVotes}</span>
           </div>
         </div>
       ) : (
-        <div className="py-4 text-center text-gray-500">
+        <div className="py-8 text-center text-[#5E6C84] bg-white/30 rounded-xl">
           No votes recorded for this team
         </div>
       )}

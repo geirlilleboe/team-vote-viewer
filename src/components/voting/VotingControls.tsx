@@ -20,11 +20,16 @@ const VotingControls: React.FC<VotingControlsProps> = ({
   onVote,
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h2 className="text-xl font-semibold mb-4">
-        Your Team: {teamName}
-      </h2>
-      <p className="mb-4">
+    <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-[#DFE1E6]">
+      <div className="flex items-center justify-center mb-4">
+        <div className="px-4 py-2 bg-[#F4F5F7] rounded-full">
+          <h2 className="text-xl font-semibold text-[#172B4D]">
+            Your Team: {teamName}
+          </h2>
+        </div>
+      </div>
+      
+      <p className="mb-5 text-center text-[#5E6C84]">
         {votingActive 
           ? "Cast your vote:" 
           : showResults 
@@ -37,10 +42,11 @@ const VotingControls: React.FC<VotingControlsProps> = ({
         value={myVote || ""} 
         onValueChange={(v) => onVote(v as VoteType)}
         disabled={!votingActive}
+        className="w-full bg-[#F4F5F7] p-2 rounded-xl"
       >
         <ToggleGroupItem 
           value="yes" 
-          className="flex-1 text-lg py-6" 
+          className="flex-1 text-lg py-6 rounded-xl data-[state=on]:bg-[#0052CC] data-[state=on]:text-white" 
           aria-label="Yes"
           disabled={!votingActive}
         >
@@ -48,7 +54,7 @@ const VotingControls: React.FC<VotingControlsProps> = ({
         </ToggleGroupItem>
         <ToggleGroupItem 
           value="no" 
-          className="flex-1 text-lg py-6" 
+          className="flex-1 text-lg py-6 rounded-xl data-[state=on]:bg-[#DE350B] data-[state=on]:text-white" 
           aria-label="No"
           disabled={!votingActive}
         >
@@ -58,8 +64,12 @@ const VotingControls: React.FC<VotingControlsProps> = ({
       
       {/* Show personal vote if voted */}
       {myVote && (
-        <div className="mt-4 text-center">
-          <p>Your vote: <span className="font-semibold">{myVote === "yes" ? "👍 Yes" : "👎 No"}</span></p>
+        <div className="mt-5 text-center p-3 bg-white border border-[#DFE1E6] rounded-xl">
+          <p className="text-[#172B4D]">Your vote: 
+            <span className={`font-semibold ml-1 ${myVote === "yes" ? "text-[#0052CC]" : "text-[#DE350B]"}`}>
+              {myVote === "yes" ? "👍 Yes" : "👎 No"}
+            </span>
+          </p>
         </div>
       )}
     </div>

@@ -32,9 +32,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ showResults, teamVotes 
   }
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 text-center">
-      <h2 className="text-xl font-semibold mb-2">Results are hidden</h2>
-      <p className="text-gray-600">
+    <div className="bg-white rounded-2xl shadow-sm p-6 text-center border border-[#DFE1E6]">
+      <h2 className="text-xl font-semibold mb-2 text-[#172B4D]">Results are hidden</h2>
+      <p className="text-[#5E6C84]">
         Start voting to see results at the end of the voting period.
       </p>
     </div>
