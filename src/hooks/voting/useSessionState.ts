@@ -32,11 +32,11 @@ export const useSessionState = (initialTeam?: Team) => {
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   
-  // Initialize or fetch voting session
+  // Initialize or fetch voting session - completely revamped
   useEffect(() => {
     if (!code) return;
     
-    // Generate a random ID for this user
+    // Generate a new random ID for this user for each session
     const randomId = Math.random().toString(36).substring(2, 10);
     setUserId(randomId);
     
@@ -53,6 +53,11 @@ export const useSessionState = (initialTeam?: Team) => {
     
     const fetchOrCreateSession = async () => {
       setIsLoading(true);
+      
+      // Reset states when fetching a new session
+      setVotingActive(false);
+      setShowResults(false);
+      setTimeRemaining(null);
       
       // Check if session exists
       const { data: existingSession, error: fetchError } = await supabase

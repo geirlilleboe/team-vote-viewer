@@ -37,15 +37,18 @@ export const useVoteManagement = (
     // Initial fetch of votes
     fetchVotes(sessionId);
     
+    // Clean up subscription and reset state when sessionId changes
     return () => {
       supabase.removeChannel(votesChannel);
+      setVotes([]);
+      setMyVote(null);
     };
   }, [sessionId]);
   
   // Check for user's vote when sessionId or team changes
   useEffect(() => {
     if (sessionId && selectedTeam && userId) {
-      checkUserVote(sessionId);
+      checkUserVote(sessionId, userId);
     } else {
       // If no sessionId, team, or userId, reset myVote
       setMyVote(null);
@@ -68,8 +71,8 @@ export const useVoteManagement = (
   };
   
   // Check if the user has already voted
-  const checkUserVote = async (sessionId: string) => {
-    if (!userId || !selectedTeam) return;
+  const checkUserVote = async (sessionId: string, userId: string) => {
+    if (!sessionId || !userId) return;
     
     const { data, error } = await supabase
       .from("votes")
@@ -95,7 +98,7 @@ export const useVoteManagement = (
   const handleVote = async (vote: VoteType) => {
     if (!sessionId || !selectedTeam || !userId || !votingActive || vote === null) return;
     
-    // Check if user already voted
+    // Check if user already voted in this specific session
     const { data: existingVote } = await supabase
       .from("votes")
       .select("*")
@@ -104,11 +107,12 @@ export const useVoteManagement = (
       .maybeSingle();
     
     if (existingVote) {
-      // Update existing vote
+      // Update existing vote for this session
       const { error } = await supabase
         .from("votes")
         .update({ vote, team: selectedTeam })
-        .eq("id", existingVote.id);
+        .eq("id", existingVote.id)
+        .eq("session_id", sessionId); // Extra check to ensure we're updating votes for this session
       
       if (error) {
         console.error("Error updating vote:", error);
@@ -120,7 +124,7 @@ export const useVoteManagement = (
         return;
       }
     } else {
-      // Create new vote
+      // Create new vote for this session
       const { error } = await supabase
         .from("votes")
         .insert([{
@@ -141,22 +145,26 @@ export const useVoteManagement = (
       }
     }
     
+    // Update local state after successful database operation
     setMyVote(vote);
     
     toast({
       title: "Vote recorded",
       description: `You voted: ${vote}`
     });
+    
+    // Refresh votes to ensure we have the latest data
+    fetchVotes(sessionId);
   };
   
-  // Reset all votes (admin function)
+  // Reset all votes (admin function) - completely revamped for reliability
   const resetVotes = async () => {
     if (!sessionId) return;
     
     try {
       console.log("Resetting votes for session:", sessionId);
       
-      // Delete all votes for this session
+      // Step 1: Delete all votes for this specific session
       const { error } = await supabase
         .from("votes")
         .delete()
@@ -172,14 +180,14 @@ export const useVoteManagement = (
         return;
       }
       
-      // Clear votes state locally 
+      // Step 2: Explicitly clear local state - this is critical
       setVotes([]);
       setMyVote(null);
       
-      // Force refresh of votes from database to ensure clean state
+      // Step 3: Force refresh of votes from database to ensure clean state
       await fetchVotes(sessionId);
       
-      // Log the number of votes after reset to verify they're gone
+      // Step 4: Verify the votes are actually gone
       const { count, error: countError } = await supabase
         .from("votes")
         .select("*", { count: 'exact', head: true })
