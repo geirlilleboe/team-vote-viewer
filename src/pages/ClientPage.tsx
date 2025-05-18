@@ -100,6 +100,7 @@ const ClientPage = () => {
           showResults={showResults}
           teamVotes={teamVotes}
           isAdmin={false}
+          votingActive={votingActive}
         />
       </div>
     </div>

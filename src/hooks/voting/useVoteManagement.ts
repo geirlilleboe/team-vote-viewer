@@ -154,6 +154,8 @@ export const useVoteManagement = (
     if (!sessionId) return;
     
     try {
+      console.log("Resetting votes for session:", sessionId);
+      
       // Delete all votes for this session
       const { error } = await supabase
         .from("votes")
@@ -176,6 +178,18 @@ export const useVoteManagement = (
       
       // Force refresh of votes from database to ensure clean state
       await fetchVotes(sessionId);
+      
+      // Log the number of votes after reset to verify they're gone
+      const { count, error: countError } = await supabase
+        .from("votes")
+        .select("*", { count: 'exact', head: true })
+        .eq("session_id", sessionId);
+      
+      if (countError) {
+        console.error("Error counting votes after reset:", countError);
+      } else {
+        console.log(`Votes after reset: ${count}`);
+      }
       
       toast({
         title: "Votes reset",

@@ -10,19 +10,27 @@ interface ResultsDisplayProps {
     team2: Vote[];
   };
   isAdmin?: boolean;
+  votingActive?: boolean;
 }
 
-const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ showResults, teamVotes, isAdmin = false }) => {
+const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ 
+  showResults, 
+  teamVotes, 
+  isAdmin = false,
+  votingActive = false 
+}) => {
   // For admin users, always show results
-  // For regular users, only show results if showResults is true
-  const shouldDisplayResults = isAdmin || showResults;
+  // For regular users, only show results if showResults is true AND voting is not active
+  const shouldDisplayResults = isAdmin || (showResults && !votingActive);
   
   if (!shouldDisplayResults) {
     return (
       <div className="bg-white rounded-2xl shadow-sm p-6 text-center border border-[#DFE1E6]">
         <h2 className="text-xl font-semibold mb-2 text-[#172B4D]">Results are hidden</h2>
         <p className="text-[#5E6C84]">
-          Start voting to see results at the end of the voting period.
+          {votingActive 
+            ? "Results will be available when voting ends" 
+            : "Start voting to see results at the end of the voting period"}
         </p>
       </div>
     );

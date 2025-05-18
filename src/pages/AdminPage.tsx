@@ -127,9 +127,10 @@ const AdminPage = () => {
         
         {/* Display votes for both teams */}
         <ResultsDisplay 
-          showResults={true} // Always show results for admin
+          showResults={true} // Admin can always see results UI
           teamVotes={teamVotes}
-          isAdmin={true}
+          isAdmin={true}     // But we'll keep this flag for clarity
+          votingActive={votingActive} // Pass voting active state
         />
       </div>
     </div>

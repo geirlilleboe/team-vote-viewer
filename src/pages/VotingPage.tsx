@@ -68,6 +68,7 @@ const VotingPage = () => {
           showResults={showResults}
           teamVotes={teamVotes}
           isAdmin={false}
+          votingActive={votingActive}
         />
       </div>
     </div>
