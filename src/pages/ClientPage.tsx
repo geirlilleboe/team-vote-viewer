@@ -96,12 +96,11 @@ const ClientPage = () => {
         )}
         
         {/* Only show results if admin has enabled results */}
-        {showResults && (
-          <ResultsDisplay 
-            showResults={showResults}
-            teamVotes={teamVotes}
-          />
-        )}
+        <ResultsDisplay 
+          showResults={showResults}
+          teamVotes={teamVotes}
+          isAdmin={false}
+        />
       </div>
     </div>
   );

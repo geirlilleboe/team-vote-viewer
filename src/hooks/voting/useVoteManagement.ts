@@ -153,29 +153,42 @@ export const useVoteManagement = (
   const resetVotes = async () => {
     if (!sessionId) return;
     
-    // Delete all votes for this session
-    const { error } = await supabase
-      .from("votes")
-      .delete()
-      .eq("session_id", sessionId);
-    
-    if (error) {
-      console.error("Error resetting votes:", error);
+    try {
+      // Delete all votes for this session
+      const { error } = await supabase
+        .from("votes")
+        .delete()
+        .eq("session_id", sessionId);
+      
+      if (error) {
+        console.error("Error resetting votes:", error);
+        toast({
+          title: "Error",
+          description: "Could not reset votes",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Clear votes state locally 
+      setVotes([]);
+      setMyVote(null);
+      
+      // Force refresh of votes from database to ensure clean state
+      await fetchVotes(sessionId);
+      
+      toast({
+        title: "Votes reset",
+        description: "All votes have been cleared"
+      });
+    } catch (err) {
+      console.error("Exception during vote reset:", err);
       toast({
         title: "Error",
-        description: "Could not reset votes",
+        description: "Could not reset votes due to an exception",
         variant: "destructive"
       });
-      return;
     }
-    
-    setVotes([]);
-    setMyVote(null);
-    
-    toast({
-      title: "Votes reset",
-      description: "All votes have been cleared"
-    });
   };
 
   // Filter votes by team

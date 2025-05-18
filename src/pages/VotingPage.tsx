@@ -63,10 +63,11 @@ const VotingPage = () => {
           />
         )}
         
-        {/* Display votes for both teams */}
+        {/* Display votes for both teams only when allowed */}
         <ResultsDisplay 
           showResults={showResults}
           teamVotes={teamVotes}
+          isAdmin={false}
         />
       </div>
     </div>

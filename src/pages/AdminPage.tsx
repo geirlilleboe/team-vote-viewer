@@ -129,6 +129,7 @@ const AdminPage = () => {
         <ResultsDisplay 
           showResults={true} // Always show results for admin
           teamVotes={teamVotes}
+          isAdmin={true}
         />
       </div>
     </div>

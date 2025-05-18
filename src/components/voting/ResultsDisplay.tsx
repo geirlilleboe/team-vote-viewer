@@ -9,10 +9,15 @@ interface ResultsDisplayProps {
     team1: Vote[];
     team2: Vote[];
   };
+  isAdmin?: boolean;
 }
 
-const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ showResults, teamVotes }) => {
-  if (!showResults) {
+const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ showResults, teamVotes, isAdmin = false }) => {
+  // For admin users, always show results
+  // For regular users, only show results if showResults is true
+  const shouldDisplayResults = isAdmin || showResults;
+  
+  if (!shouldDisplayResults) {
     return (
       <div className="bg-white rounded-2xl shadow-sm p-6 text-center border border-[#DFE1E6]">
         <h2 className="text-xl font-semibold mb-2 text-[#172B4D]">Results are hidden</h2>
