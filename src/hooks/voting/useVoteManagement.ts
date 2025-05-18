@@ -157,47 +157,82 @@ export const useVoteManagement = (
     fetchVotes(sessionId);
   };
   
-  // Reset all votes (admin function) - completely revamped for reliability
+  // COMPLETELY REBUILT reset votes function with multi-level verification
   const resetVotes = async () => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      console.error("No session ID provided for reset");
+      return;
+    }
     
     try {
-      console.log("Resetting votes for session:", sessionId);
+      console.log("Starting complete reset for session:", sessionId);
       
-      // Step 1: Delete all votes for this specific session
-      const { error } = await supabase
+      // Step 1: First clear local state to prevent old data display
+      setVotes([]);
+      setMyVote(null);
+      
+      // Step 2: Delete all votes for this specific session
+      console.log(`Deleting all votes for session ${sessionId}...`);
+      const { error: deleteError } = await supabase
         .from("votes")
         .delete()
         .eq("session_id", sessionId);
       
-      if (error) {
-        console.error("Error resetting votes:", error);
+      if (deleteError) {
+        console.error("Error resetting votes:", deleteError);
         toast({
           title: "Error",
           description: "Could not reset votes",
           variant: "destructive"
         });
+        
+        // If deletion failed, refresh votes to ensure UI is consistent
+        fetchVotes(sessionId);
         return;
       }
       
-      // Step 2: Explicitly clear local state - this is critical
-      setVotes([]);
-      setMyVote(null);
-      
-      // Step 3: Force refresh of votes from database to ensure clean state
-      await fetchVotes(sessionId);
-      
-      // Step 4: Verify the votes are actually gone
+      // Step 3: Verify deletion was successful
       const { count, error: countError } = await supabase
         .from("votes")
         .select("*", { count: 'exact', head: true })
         .eq("session_id", sessionId);
       
       if (countError) {
-        console.error("Error counting votes after reset:", countError);
+        console.error("Error verifying vote deletion:", countError);
       } else {
-        console.log(`Votes after reset: ${count}`);
+        console.log(`Votes remaining after reset: ${count}`);
+        
+        if (count && count > 0) {
+          console.error("WARNING: Some votes were not deleted!");
+          
+          // Try harder deletion with additional logging
+          console.log("Attempting forceful deletion...");
+          
+          // Second deletion attempt with different approach
+          const { error: secondDeleteError } = await supabase
+            .from("votes")
+            .delete()
+            .filter("session_id", "eq", sessionId);
+            
+          if (secondDeleteError) {
+            console.error("Second deletion attempt failed:", secondDeleteError);
+          } else {
+            console.log("Second deletion attempt completed");
+          }
+        } else {
+          console.log("Verified: All votes successfully deleted");
+        }
       }
+      
+      // Step 4: Explicitly clear state again to be super safe
+      setVotes([]);
+      setMyVote(null);
+      
+      // Step 5: Refresh local state from database (should be empty)
+      await fetchVotes(sessionId);
+      
+      // Step 6: Double-check our local state
+      console.log("Local state after reset:", votes.length);
       
       toast({
         title: "Votes reset",
@@ -210,6 +245,9 @@ export const useVoteManagement = (
         description: "Could not reset votes due to an exception",
         variant: "destructive"
       });
+      
+      // If an exception occurred, refresh votes to ensure UI is consistent
+      fetchVotes(sessionId);
     }
   };
 

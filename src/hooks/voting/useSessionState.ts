@@ -37,7 +37,7 @@ export const useSessionState = (initialTeam?: Team) => {
     if (!code) return;
     
     // Generate a new random ID for this user for each session
-    const randomId = Math.random().toString(36).substring(2, 10);
+    const randomId = Math.random().toString(36).substring(2, 10) + Date.now().toString();
     setUserId(randomId);
     
     // Try to load team from localStorage (only for UI preference)
@@ -126,6 +126,16 @@ export const useSessionState = (initialTeam?: Team) => {
     };
     
     fetchOrCreateSession();
+    
+    // Clean up function to reset state when component unmounts or code changes
+    return () => {
+      console.log("Cleaning up session state");
+      setSessionId(null);
+      setQuestion("Do you agree with the proposal?");
+      setVotingActive(false);
+      setShowResults(false);
+      setTimeRemaining(null);
+    };
   }, [code, initialTeam]);
 
   // Update session status (active/results)
