@@ -7,7 +7,7 @@ interface UseTimerManagementProps {
   timeRemaining: number | null;
   sessionId: string | null;
   updateSessionStatus: (sessionId: string, active: boolean, showResults: boolean) => void;
-  setTimeRemaining: (time: number | null) => void;
+  setTimeRemaining: (time: number | null | ((prevTime: number | null) => number | null)) => void;
 }
 
 export const useTimerManagement = ({
