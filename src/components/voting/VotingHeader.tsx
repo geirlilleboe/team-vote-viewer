@@ -30,7 +30,7 @@ const VotingHeader: React.FC<VotingHeaderProps> = ({
         
         {isAdmin && (
           <div className="flex gap-2">
-            {!votingActive && timeRemaining === null && (
+            {!votingActive && (
               <Button variant="default" onClick={onStartVoting}>
                 Start Voting (15s)
               </Button>

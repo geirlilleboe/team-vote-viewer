@@ -90,6 +90,9 @@ export const useSessionState = (initialTeam?: Team) => {
             // Voting has ended
             updateSessionStatus(existingSession.id, false, true);
           }
+        } else {
+          // Reset timer if voting is not active
+          setTimeRemaining(null);
         }
       } else {
         // Create new session
@@ -131,6 +134,14 @@ export const useSessionState = (initialTeam?: Team) => {
       // Set end time 15 seconds in the future
       const endTime = new Date(Date.now() + 15 * 1000).toISOString();
       updateData.end_time = endTime;
+      
+      // Set initial time remaining
+      setTimeRemaining(15);
+    } else {
+      // Reset timer when voting is not active
+      if (!showResults) {
+        setTimeRemaining(null);
+      }
     }
     
     const { error } = await supabase
@@ -152,7 +163,6 @@ export const useSessionState = (initialTeam?: Team) => {
     setShowResults(showResults);
     
     if (active) {
-      setTimeRemaining(15);
       toast({
         title: "Voting has started",
         description: "You have 15 seconds to cast your vote"

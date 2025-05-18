@@ -62,7 +62,8 @@ export const useVotingSession = (initialTeam?: Team) => {
     votingActive,
     timeRemaining,
     sessionId,
-    updateSessionStatus
+    updateSessionStatus,
+    setTimeRemaining
   });
   
   // Return combined hook data

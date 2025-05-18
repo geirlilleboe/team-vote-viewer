@@ -46,6 +46,9 @@ export const useVoteManagement = (
   useEffect(() => {
     if (sessionId && selectedTeam && userId) {
       checkUserVote(sessionId);
+    } else {
+      // If no sessionId, team, or userId, reset myVote
+      setMyVote(null);
     }
   }, [sessionId, selectedTeam, userId]);
   
@@ -82,6 +85,9 @@ export const useVoteManagement = (
     
     if (data) {
       setMyVote(data.vote as VoteType);
+    } else {
+      // User hasn't voted yet in this session
+      setMyVote(null);
     }
   };
   
