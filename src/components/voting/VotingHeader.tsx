@@ -9,6 +9,7 @@ interface VotingHeaderProps {
   showResults: boolean;
   onStartVoting: () => void;
   onResetVotes: () => void;
+  onNewSession?: () => void;
   onBack: () => void;
   isAdmin?: boolean;
 }
@@ -20,6 +21,7 @@ const VotingHeader: React.FC<VotingHeaderProps> = ({
   showResults,
   onStartVoting,
   onResetVotes,
+  onNewSession,
   onBack,
   isAdmin = false,
 }) => {
@@ -29,7 +31,7 @@ const VotingHeader: React.FC<VotingHeaderProps> = ({
         <h1 className="text-2xl font-bold">{question}</h1>
         
         {isAdmin && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {!votingActive && (
               <Button variant="default" onClick={onStartVoting}>
                 Start Voting (15s)
@@ -38,6 +40,11 @@ const VotingHeader: React.FC<VotingHeaderProps> = ({
             <Button variant="outline" onClick={onBack}>
               Change Code
             </Button>
+            {onNewSession && (
+              <Button variant="secondary" onClick={onNewSession}>
+                New Session
+              </Button>
+            )}
             <Button variant="destructive" onClick={onResetVotes}>
               Reset Votes
             </Button>

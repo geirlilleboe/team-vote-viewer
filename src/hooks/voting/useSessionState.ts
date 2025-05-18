@@ -185,6 +185,88 @@ export const useSessionState = (initialTeam?: Team) => {
     }
   };
   
+  // Create a completely new session with the same code
+  const createNewSession = async () => {
+    if (!code || !sessionId) return;
+    
+    setIsLoading(true);
+    
+    try {
+      console.log("Creating a new session with code:", code);
+      
+      // Step 1: Delete all votes for the current session
+      const { error: deleteVotesError } = await supabase
+        .from("votes")
+        .delete()
+        .eq("session_id", sessionId);
+        
+      if (deleteVotesError) {
+        console.error("Error deleting votes:", deleteVotesError);
+      }
+      
+      // Step 2: Delete the current session
+      const { error: deleteSessionError } = await supabase
+        .from("voting_sessions")
+        .delete()
+        .eq("id", sessionId);
+        
+      if (deleteSessionError) {
+        console.error("Error deleting session:", deleteSessionError);
+        toast({
+          title: "Error",
+          description: "Could not create new session",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Step 3: Create a new session with the same code
+      const { data: newSession, error: createError } = await supabase
+        .from("voting_sessions")
+        .insert([{ code }])
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error("Error creating new session:", createError);
+        toast({
+          title: "Error",
+          description: "Could not create new session",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Step 4: Update local state with the new session
+      setSessionId(newSession.id);
+      setQuestion(newSession.question);
+      setVotingActive(false);
+      setShowResults(false);
+      setTimeRemaining(null);
+      
+      // Generate a new user ID for this session
+      const randomId = Math.random().toString(36).substring(2, 10) + Date.now().toString();
+      setUserId(randomId);
+      
+      toast({
+        title: "New voting session created",
+        description: "All previous votes have been cleared"
+      });
+      
+    } catch (err) {
+      console.error("Exception during session creation:", err);
+      toast({
+        title: "Error",
+        description: "Could not create new session",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Go back to the code entry page
   const handleBack = () => {
     navigate("/");
@@ -204,6 +286,7 @@ export const useSessionState = (initialTeam?: Team) => {
     setVotingActive,
     isLoading,
     updateSessionStatus,
+    createNewSession, // Export the new function
     handleBack
   };
 };

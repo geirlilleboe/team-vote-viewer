@@ -24,6 +24,7 @@ export const useVotingSession = (initialTeam?: Team) => {
     setVotingActive,
     isLoading,
     updateSessionStatus,
+    createNewSession,
     handleBack
   } = useSessionState(initialTeam);
   
@@ -81,6 +82,7 @@ export const useVotingSession = (initialTeam?: Team) => {
     handleVote,
     startVoting,
     resetVotes,
+    createNewSession,
     handleBack
   };
 };
