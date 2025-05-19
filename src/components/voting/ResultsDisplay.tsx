@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import TeamVotes from "@/components/TeamVotes";
 import type { Vote } from "@/types/supabase";
 
@@ -19,9 +19,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   isAdmin = false,
   votingActive = false 
 }) => {
-  // For admin users, always show results
+  // For admin users, always show results panel
   // For regular users, only show results if showResults is true AND voting is not active
   const shouldDisplayResults = isAdmin || (showResults && !votingActive);
+  
+  // Track if there are any votes to display
+  const hasVotes = teamVotes.team1.length > 0 || teamVotes.team2.length > 0;
   
   if (!shouldDisplayResults) {
     return (
@@ -37,19 +40,32 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   }
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <TeamVotes 
-        team="team1" 
-        teamName="Team 1" 
-        votes={teamVotes.team1} 
-        color="blue"
-      />
-      <TeamVotes 
-        team="team2" 
-        teamName="Team 2" 
-        votes={teamVotes.team2} 
-        color="red"
-      />
+    <div>
+      {!hasVotes && (
+        <div className="bg-white rounded-2xl shadow-sm p-6 text-center border border-[#DFE1E6] mb-6">
+          <h2 className="text-xl font-semibold mb-2 text-[#172B4D]">No votes yet</h2>
+          <p className="text-[#5E6C84]">
+            {isAdmin ? "Votes will appear here when participants start voting" : "Be the first to vote!"}
+          </p>
+        </div>
+      )}
+      
+      {hasVotes && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TeamVotes 
+            team="team1" 
+            teamName="Team 1" 
+            votes={teamVotes.team1} 
+            color="blue"
+          />
+          <TeamVotes 
+            team="team2" 
+            teamName="Team 2" 
+            votes={teamVotes.team2} 
+            color="red"
+          />
+        </div>
+      )}
     </div>
   );
 };

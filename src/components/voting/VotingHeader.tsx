@@ -32,8 +32,8 @@ const VotingHeader: React.FC<VotingHeaderProps> = ({
         
         {isAdmin && (
           <div className="flex flex-wrap gap-2">
-            {!votingActive && (
-              <Button variant="default" onClick={onStartVoting}>
+            {!votingActive && !showResults && (
+              <Button variant="default" onClick={onStartVoting} className="bg-green-600 hover:bg-green-700">
                 Start Voting (15s)
               </Button>
             )}
@@ -45,7 +45,11 @@ const VotingHeader: React.FC<VotingHeaderProps> = ({
                 New Session
               </Button>
             )}
-            <Button variant="destructive" onClick={onResetVotes}>
+            <Button 
+              variant="destructive" 
+              onClick={onResetVotes}
+              className="font-medium"
+            >
               Reset Votes
             </Button>
           </div>

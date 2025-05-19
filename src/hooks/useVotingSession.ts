@@ -28,7 +28,7 @@ export const useVotingSession = (initialTeam?: Team) => {
     handleBack
   } = useSessionState(initialTeam);
   
-  // Setup vote management
+  // Setup vote management with the current sessionId
   const {
     votes,
     myVote,
