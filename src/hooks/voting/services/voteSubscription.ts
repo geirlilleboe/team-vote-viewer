@@ -13,7 +13,7 @@ export const subscribeToVotes = (
     .channel('public:votes')
     .on('postgres_changes', 
       { event: '*', schema: 'public', table: 'votes' }, 
-      () => {
+      (payload) => {
         if (sessionId) {
           onVotesChange();
         }
